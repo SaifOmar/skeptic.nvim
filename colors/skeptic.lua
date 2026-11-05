@@ -202,52 +202,15 @@ local function apply_after_transparency()
 	vim.defer_fn(apply, 80)
 end
 
--- Status bar in the editor's own text colours: dark background, tan text,
--- with only the mode label tinted from the same palette.
-local function lualine_mode(accent)
-	return {
-		a = { bg = C.bg_highlight, fg = accent, gui = "bold" },
-		b = { bg = C.bg, fg = C.fg },
-		c = { bg = C.bg, fg = C.fg },
-		x = { bg = C.bg, fg = C.fg },
-		y = { bg = C.bg, fg = C.fg },
-		z = { bg = C.bg, fg = C.fg },
-	}
-end
-
-local lualine_theme = {
-	normal = lualine_mode(C.fg),
-	insert = lualine_mode(C.comment),
-	visual = lualine_mode(C.keyword),
-	replace = lualine_mode(C.warning),
-	command = lualine_mode(C.string),
-	inactive = {
-		a = { bg = C.bg, fg = C.gutter, gui = "bold" },
-		b = { bg = C.bg, fg = C.gutter },
-		c = { bg = C.bg, fg = C.gutter },
-		x = { bg = C.bg, fg = C.gutter },
-		y = { bg = C.bg, fg = C.gutter },
-		z = { bg = C.bg, fg = C.gutter },
-	},
-}
-
-local function apply_lualine()
-	pcall(function()
-		require("lualine").setup({ options = { theme = lualine_theme } })
-	end)
-end
-
 local group = vim.api.nvim_create_augroup("SkepticTheme", { clear = true })
-vim.api.nvim_create_autocmd({ "ColorScheme", "User", "VimEnter" }, {
+-- The 80 ms-reapply keeps the ported faces alive over Omarchy's transparency
+-- snippet, which is sourced a few ms after the theme. The lualine theme needs
+-- no hook: it ships in this plugin as lualine.themes.skeptic and lualine's
+-- "auto" theme finds it from vim.g.colors_name.
+vim.api.nvim_create_autocmd({ "ColorScheme", "VimEnter" }, {
 	group = group,
-	pattern = { "*", "VeryLazy", "LazyVimColorscheme" },
-	callback = function(event)
-		if event.event == "User" and event.file ~= "VeryLazy" and event.file ~= "LazyVimColorscheme" then
-			return
-		end
-		apply_after_transparency()
-		apply_lualine()
-	end,
+	pattern = "*",
+	callback = apply_after_transparency,
 })
 
 require("aether").load({
@@ -310,4 +273,3 @@ require("aether").load({
 -- The ColorScheme autocmd above covers :colorscheme skeptic; apply once more
 -- right away so sourcing this file directly is also enough.
 apply()
-apply_lualine()
